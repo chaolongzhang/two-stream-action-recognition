@@ -1,4 +1,5 @@
 import os, pickle
+import random
 
 
 class UCF101_splitter():
@@ -18,6 +19,42 @@ class UCF101_splitter():
             if action not in self.action_label.keys():
                 self.action_label[action]=label
 
+    def subset2(self):
+        return self.subset_x(2)
+
+    def subset5(self):
+        return self.subset_x(5)
+
+    def subset10(self):
+        return self.subset_x(10)
+
+    def subset_x(self, x = 10):
+        self.split_video()
+
+        subset_actions = random.sample(list(self.action_label.keys()), x)
+        print(subset_actions)
+        subset_label = []
+        new_label = {}
+        label = 1
+        for action in subset_actions:
+            new_label[self.action_label[action]] = label
+            label += 1
+            subset_label.append(self.action_label[action])
+
+        subset_train_video = self.subset_dic(self.train_video, subset_label, new_label)
+        subset_test_video = self.subset_dic(self.test_video, subset_label, new_label)
+        print('==> (Training video, Validation video):(', len(subset_train_video), len(subset_test_video), ')')
+
+        return subset_train_video, subset_test_video
+
+    def subset_dic(self, full_video, subset_label, new_label):
+        subset_video = {}
+        for video, label in full_video.items():
+            if str(label) in subset_label:
+                subset_video[video] = new_label[str(label)]
+        return subset_video            
+
+
     def split_video(self):
         self.get_action_index()
         for path,subdir,files in os.walk(self.path):
@@ -26,7 +63,7 @@ class UCF101_splitter():
                     train_video = self.file2_dic(self.path+filename)
                 if filename.split('.')[0] == 'testlist'+self.split:
                     test_video = self.file2_dic(self.path+filename)
-        print '==> (Training video, Validation video):(', len(train_video),len(test_video),')'
+        print('==> (Training video, Validation video):(', len(train_video),len(test_video),')')
         self.train_video = self.name_HandstandPushups(train_video)
         self.test_video = self.name_HandstandPushups(test_video)
 
@@ -64,5 +101,6 @@ if __name__ == '__main__':
     path = '../UCF_list/'
     split = '01'
     splitter = UCF101_splitter(path=path,split=split)
-    train_video,test_video = splitter.split_video()
-    print len(train_video),len(test_video)
+    # train_video,test_video = splitter.split_video()
+    train_video, test_video = splitter.subset5()
+    print(len(train_video),len(test_video))

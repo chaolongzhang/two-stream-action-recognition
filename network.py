@@ -8,6 +8,7 @@ from torch.autograd import Variable
 import torch.nn as nn
 import math
 import torch.utils.model_zoo as model_zoo
+from torchvision import models
 
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
@@ -239,8 +240,18 @@ def weight_transform(model_dict, pretrain_dict, channel):
     model_dict.update(weight_dict)
     return model_dict
 
+
+def alexnet(pretrained=False, channel= 20, **kwargs):
+    net = models.alexnet(pretrained=True)
+    net.features[0] = nn.Conv2d(channel, 64, (11, 11), stride=(4, 4), padding=(2, 2))
+    in_features = net.classifier[6].in_features
+    net.classifier[6] = nn.Linear(in_features, 101)
+    net.classifier[6] = nn.Sequential(nn.Linear(in_features, 101), nn.Softmax())
+    return net
+
 #Test network
 if __name__ == '__main__':
-    model = resnet34(pretrained= True, channel=10)
-    print model
+    # model = resnet34(pretrained= True, channel=10)
+    model = alexnet()
+    print(model)
      

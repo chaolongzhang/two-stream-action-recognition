@@ -1,0 +1,6 @@
+record/spatial/checkpoint.pth.tar
+record/spatial/model_best.pth.tar
+record/spatial/rgb_test.csv
+record/spatial/rgb_train.csv
+__pycache__/
+*.pyc
