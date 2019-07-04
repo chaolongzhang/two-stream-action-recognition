@@ -19,16 +19,17 @@ class spatial_dataset(Dataset):
         return len(self.keys)
 
     def load_ucf_image(self,video_name, index):
-        if video_name.split('_')[0] == 'HandstandPushups':
-            n,g = video_name.split('_',1)
-            name = 'HandStandPushups_'+g
-            # path = self.root_dir + 'HandstandPushups'+'/separated_images/v_'+name+'/v_'+name+'_'
-            path = self.root_dir + 'HandstandPushups'+'/v_'+name+'/v_'+name+'_'
-        else:
-            path = self.root_dir + video_name.split('_')[0]+'/separated_images/v_'+video_name+'/v_'+video_name+'_'
-            path = self.root_dir + video_name.split('_')[0]+'/v_'+video_name+'/v_'+video_name+'_'
+        # if video_name.split('_')[0] == 'HandstandPushups':
+        #     n,g = video_name.split('_',1)
+        #     name = 'HandStandPushups_'+g
+        #     path = self.root_dir + 'HandstandPushups'+'/v_'+name+'/v_'+name+'_'
+        # else:
+        #     path = self.root_dir + video_name.split('_')[0]+'/v_'+video_name+'/v_'+video_name+'_'
          
-        img = Image.open(path +str(index)+'.jpg')
+        path = path = self.root_dir + '/v_' + video_name + '/'
+        sindex = str(index)
+        sindex = '0' * (6 - len(sindex)) + sindex
+        img = Image.open(path + 'frame' + sindex + '.jpg')
         transformed_img = self.transform(img)
         img.close()
 
