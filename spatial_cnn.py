@@ -18,13 +18,13 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 import dataloader
 from utils import *
-from network import alexnet, resnet18
+from network import alexnet, resnet18, resnet101
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 parser = argparse.ArgumentParser(description='UCF101 spatial stream on resnet101')
-parser.add_argument('--epochs', default=500, type=int, metavar='N', help='number of total epochs')
-parser.add_argument('--batch-size', default=32, type=int, metavar='N', help='mini-batch size (default: 25)')
+parser.add_argument('--epochs', default=30, type=int, metavar='N', help='number of total epochs')
+parser.add_argument('--batch-size', default=10, type=int, metavar='N', help='mini-batch size (default: 25)')
 parser.add_argument('--lr', default=5e-4, type=float, metavar='LR', help='initial learning rate')
 parser.add_argument('--evaluate', dest='evaluate', action='store_true', help='evaluate model on validation set')
 parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
@@ -39,10 +39,10 @@ def main():
     data_loader = dataloader.spatial_dataloader(
                         BATCH_SIZE=arg.batch_size,
                         num_workers=8,
-                        path='/media/FS/database/UCF101/jpegs_256/',
-                        ucf_list ='/home/researcher/code/two-stream-action-recognition/UCF_list/',
-                        # path='d:/MyFiles/dataset/UCF-101-splited/',
-                        # ucf_list ='d:/MyFiles/source/Github/two-stream-action-recognition/UCF_list/',
+                        # path='/media/FS/database/UCF101/jpegs_256/',
+                        # ucf_list ='/home/researcher/code/two-stream-action-recognition/UCF_list/',
+                        path='d:/MyFiles/dataset/UCF-101-splited/',
+                        ucf_list ='./UCF_list/',
                         ucf_split ='01', 
                         )
     
@@ -74,14 +74,15 @@ class Spatial_CNN():
         self.test_loader=test_loader
         self.best_prec1=0
         self.test_video=test_video
+        self.nb_classes = 5
         use_gpu = True
         self.device = torch.device("cuda:0" if use_gpu and torch.cuda.is_available() else "cpu")
 
     def build_model(self):
         print ('==> Build model and setup loss and optimizer')
         #build model
-        # self.model = resnet101(pretrained= True, channel=3).cuda()
-        self.model = resnet18(pretrained=True, channel=3).to(self.device)
+        # self.model = resnet101(pretrained= False, channel=3).to(self.device)
+        self.model = resnet18(pretrained=True, channel=3, nb_classes=self.nb_classes).to(self.device)
         # self.model = alexnet(pretrained=True, channel=3).to(self.device)
         #Loss function and optimizer
         self.criterion = nn.CrossEntropyLoss().to(self.device)
@@ -153,7 +154,7 @@ class Spatial_CNN():
             target_var = label.to(self.device)
 
             # compute output
-            output = torch.zeros(len(data_dict['img1']), 101).float().to(self.device)
+            output = torch.zeros(len(data_dict['img1']), self.nb_classes).float().to(self.device)
             for i in range(len(data_dict)):
                 key = 'img'+str(i)
                 data = data_dict[key]
@@ -233,7 +234,7 @@ class Spatial_CNN():
     def frame2_video_level_accuracy(self):
             
         correct = 0
-        video_level_preds = np.zeros((len(self.dic_video_level_preds),101))
+        video_level_preds = np.zeros((len(self.dic_video_level_preds), self.nb_classes))
         video_level_labels = np.zeros(len(self.dic_video_level_preds))
         ii=0
         for name in sorted(self.dic_video_level_preds.keys()):
