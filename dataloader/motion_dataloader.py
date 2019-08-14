@@ -16,12 +16,13 @@ from torch.autograd import Variable
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from .split_train_test_video import *
+from .optical_flow import extract_optical_flow
  
 class motion_dataset(Dataset):  
     def __init__(self, dic, in_channel, root_dir, mode, transform=None):
         #Generate a 16 Frame clip
-        self.keys=dic.keys()
-        self.values=dic.values()
+        self.keys=list(dic.keys())
+        self.values=list(dic.values())
         self.root_dir = root_dir
         self.transform = transform
         self.mode=mode
@@ -30,7 +31,8 @@ class motion_dataset(Dataset):
         self.img_cols=224
 
     def stackopf(self):
-        name = 'v_'+self.video
+        # name = 'v_'+self.video
+        name = self.video
         u = self.root_dir+ 'u/' + name
         v = self.root_dir+ 'v/'+ name
         
@@ -40,6 +42,8 @@ class motion_dataset(Dataset):
 
         for j in range(self.in_channel):
             idx = i + j
+
+            '''
             idx = str(idx)
             frame_idx = 'frame'+ idx.zfill(6)
             h_image = u +'/' + frame_idx +'.jpg'
@@ -48,15 +52,31 @@ class motion_dataset(Dataset):
             imgH=(Image.open(h_image))
             imgV=(Image.open(v_image))
 
+            '''
+            fname1, fname2 = self.load_2ucf_image(name, idx)
+            imgH, imgV = extract_optical_flow(fname1, fname2)
+
             H = self.transform(imgH)
             V = self.transform(imgV)
-
             
             flow[2*(j-1),:,:] = H
             flow[2*(j-1)+1,:,:] = V      
-            imgH.close()
-            imgV.close()  
+            # imgH.close()
+            # imgV.close()  
         return flow
+
+    def load_2ucf_image(self,video_name, index):
+        if video_name.split('_')[0] == 'HandstandPushups':
+            n,g = video_name.split('_',1)
+            name = 'HandStandPushups_'+g
+            path = self.root_dir + 'HandstandPushups'+'/v_'+name+'/v_'+name+'_'
+        else:
+            path = self.root_dir + video_name.split('_')[0]+'/v_'+video_name+'/v_'+video_name+'_'
+         
+        fname1 = path + str(index) + '.jpg'
+        fname2 = path + str(index + 1) + '.jpg'
+
+        return fname1, fname2
 
     def __len__(self):
         return len(self.keys)
@@ -98,11 +118,12 @@ class Motion_DataLoader():
         self.data_path=path
         # split the training and testing videos
         splitter = UCF101_splitter(path=ucf_list,split=ucf_split)
-        self.train_video, self.test_video = splitter.split_video()
+        # self.train_video, self.test_video = splitter.split_video()
+        self.train_video, self.test_video = splitter.subset5()
         
     def load_frame_count(self):
         #print '==> Loading frame number of each video'
-        with open('dic/frame_count.pickle','rb') as file:
+        with open(os.path.join(os.path.dirname(__file__), 'dic/frame_count.pickle'), 'rb') as file:
             dic_frame = pickle.load(file)
         file.close()
 

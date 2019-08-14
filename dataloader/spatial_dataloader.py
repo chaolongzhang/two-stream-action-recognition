@@ -19,17 +19,17 @@ class spatial_dataset(Dataset):
         return len(self.keys)
 
     def load_ucf_image(self,video_name, index):
-        # if video_name.split('_')[0] == 'HandstandPushups':
-        #     n,g = video_name.split('_',1)
-        #     name = 'HandStandPushups_'+g
-        #     path = self.root_dir + 'HandstandPushups'+'/v_'+name+'/v_'+name+'_'
-        # else:
-        #     path = self.root_dir + video_name.split('_')[0]+'/v_'+video_name+'/v_'+video_name+'_'
+        if video_name.split('_')[0] == 'HandstandPushups':
+            n,g = video_name.split('_',1)
+            name = 'HandStandPushups_'+g
+            path = self.root_dir + 'HandstandPushups'+'/v_'+name+'/v_'+name+'_'
+        else:
+            path = self.root_dir + video_name.split('_')[0]+'/v_'+video_name+'/v_'+video_name+'_'
          
-        path = path = self.root_dir + '/v_' + video_name + '/'
+        # path = path = self.root_dir + '/v_' + video_name + '/'
         sindex = str(index)
-        sindex = '0' * (6 - len(sindex)) + sindex
-        img = Image.open(path + 'frame' + sindex + '.jpg')
+        # sindex = sindex.zfill(6)
+        img = Image.open(path + sindex + '.jpg')
         transformed_img = self.transform(img)
         img.close()
 
@@ -79,11 +79,12 @@ class spatial_dataloader():
         self.frame_count ={}
         # split the training and testing videos
         splitter = UCF101_splitter(path=ucf_list,split=ucf_split)
-        self.train_video, self.test_video = splitter.split_video()
+        # self.train_video, self.test_video = splitter.split_video()
+        self.train_video, self.test_video = splitter.subset5()
 
     def load_frame_count(self):
         #print '==> Loading frame number of each video'
-        with open(os.path.join(os.path.dirname(__file__), 'dic/new_frame_count.pickle'), 'rb') as file:
+        with open(os.path.join(os.path.dirname(__file__), 'dic/frame_count.pickle'), 'rb') as file:
             dic_frame = pickle.load(file)
         file.close()
 
